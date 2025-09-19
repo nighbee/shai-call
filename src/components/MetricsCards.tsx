@@ -26,7 +26,7 @@ export const MetricsCards = ({ metrics, callsCount }: MetricsCardsProps) => {
     { title: 'Script Match', value: metrics.avgScript, icon: Target },
     { title: 'Errors Free', value: metrics.avgErrors, icon: CheckCircle },
     { title: 'Overall Rating', value: metrics.avgRating, icon: Star },
-    { title: 'KPI Score', value: metrics.avgKPI, icon: BarChart3 },
+    { title: 'KPI Score/Tenge earned', value: metrics.avgKPI, icon: BarChart3 },
   ];
 
   return (
