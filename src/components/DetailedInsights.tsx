@@ -53,9 +53,17 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
                 briefOpen ? 'max-h-[500px]' : 'max-h-0'
               } bg-white p-4 rounded-lg border border-border`}
             >
-              <p className="text-sm text-card-foreground leading-relaxed">
-                {latestCall.Brief || 'No brief available.'}
-              </p>
+              <div className="text-sm text-card-foreground leading-relaxed">
+                {latestCall.Brief ? (
+                  latestCall.Brief.split('\n\n').map((paragraph, index) => (
+                    <p key={index} className="mb-3 last:mb-0">
+                      {paragraph}
+                    </p>
+                  ))
+                ) : (
+                  <p>No brief available.</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -73,9 +81,17 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
                 recOpen ? 'max-h-[500px]' : 'max-h-0'
               } bg-white p-4 rounded-lg border border-border`}
             >
-              <p className="text-sm text-card-foreground leading-relaxed">
-                {latestCall.Recommendations || 'No recommendations available.'}
-              </p>
+              <div className="text-sm text-card-foreground leading-relaxed">
+                {latestCall.Recommendations ? (
+                  latestCall.Recommendations.split('\n\n').map((paragraph, index) => (
+                    <p key={index} className="mb-3 last:mb-0">
+                      {paragraph}
+                    </p>
+                  ))
+                ) : (
+                  <p>No recommendations available.</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -93,9 +109,17 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
                 nbaOpen ? 'max-h-[500px]' : 'max-h-0'
               } bg-gradient-warning p-4 rounded-lg border border-border`}
             >
-              <p className="text-sm text-warning-foreground font-medium leading-relaxed">
-                {latestCall['Next Best Action'] || 'No action items available.'}
-              </p>
+              <div className="text-sm text-warning-foreground font-medium leading-relaxed">
+                {latestCall['Next Best Action'] ? (
+                  latestCall['Next Best Action'].split('\n\n').map((paragraph, index) => (
+                    <p key={index} className="mb-3 last:mb-0">
+                      {paragraph}
+                    </p>
+                  ))
+                ) : (
+                  <p>No action items available.</p>
+                )}
+              </div>
             </div>
           </div>
 

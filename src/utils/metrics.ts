@@ -21,39 +21,27 @@ export function computeMetrics(
     return { avgQuality: 0, avgScript: 0, avgErrors: 0, avgRating: 0, avgKPI: 0 };
   }
 
-  // Deduplicate by manager+client for metrics
-  const uniqueMap = new Map<string, CallData>();
-  validData.forEach((call) => {
-    const key = `${call['ID man']}_${call.ClientId}`;
-    // Keep only the latest call per pair
-    const existing = uniqueMap.get(key);
-    const callTime = new Date(`${call.Date} ${call.Time}`).getTime();
-    if (!existing) {
-      uniqueMap.set(key, call);
-    } else {
-      const existingTime = new Date(`${existing.Date} ${existing.Time}`).getTime();
-      if (callTime > existingTime) {
-        uniqueMap.set(key, call);
-      }
-    }
-  });
-
-  const dedupData = Array.from(uniqueMap.values());
-
-  // If specific manager + client → take latest
+  // If specific manager + client → find that specific pair
   if (manager !== ALL_MANAGERS && client !== ALL_CLIENTS) {
-    const latest = dedupData[dedupData.length - 1];
-    return {
-      avgQuality: latest['Quality of Call'],
-      avgScript: latest['Script Match'],
-      avgErrors: latest['Errors Free'],
-      avgRating: latest['Overall Rating'],
-      avgKPI: latest['KPI'],
-    };
+    const specificCall = validData.find(
+      (call) => 
+        call['Man name'].trim() === manager.trim() && 
+        call['Client Phone'].trim() === client.trim()
+    );
+    
+    if (specificCall) {
+      return {
+        avgQuality: specificCall['Quality of Call'],
+        avgScript: specificCall['Script Match'],
+        avgErrors: specificCall['Errors Free'],
+        avgRating: specificCall['Overall Rating'],
+        avgKPI: specificCall['KPI'],
+      };
+    }
   }
 
-  // Otherwise → average metrics
-  const sum = dedupData.reduce(
+  // Otherwise → average metrics across all calls
+  const sum = validData.reduce(
     (acc, call) => {
       acc.quality += call['Quality of Call'];
       acc.script += call['Script Match'];
@@ -65,7 +53,7 @@ export function computeMetrics(
     { quality: 0, script: 0, errors: 0, rating: 0, kpi: 0 }
   );
 
-  const count = dedupData.length;
+  const count = validData.length;
 
   return {
     avgQuality: +(sum.quality / count).toFixed(2),
