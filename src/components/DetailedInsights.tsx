@@ -68,9 +68,9 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
 
         {/* Call Summary */}
         <div className="bg-muted p-4 rounded-lg">
-          <p className="text-sm text-muted-foreground">
+          {/* <p className="text-sm text-muted-foreground">
             Latest interaction on {parseDateTimeFromDotted(latestCall.Date).toLocaleDateString()} at {latestCall.Time}
-          </p>
+          </p> */}
         </div>
       </CardContent>
     </Card>

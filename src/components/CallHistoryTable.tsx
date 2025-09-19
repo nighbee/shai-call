@@ -15,16 +15,18 @@ export const CallHistoryTable = ({ data }: CallHistoryTableProps) => {
     return dateB.getTime() - dateA.getTime();
   });
 
+  // 🟢🟡🔴 для рейтинга (0–10)
   const getRatingBadge = (rating: number) => {
-    if (rating >= 8) return 'bg-success text-success-foreground';
-    if (rating >= 6) return 'bg-warning text-warning-foreground';
-    return 'bg-destructive text-destructive-foreground';
+    if (rating < 4) return 'bg-red-100 text-red-600';
+    if (rating >= 4 && rating <= 7) return 'bg-yellow-100 text-yellow-600';
+    return 'bg-green-100 text-green-600';
   };
 
-  const getPercentageBadge = (percentage: number) => {
-    if (percentage >= 80) return 'bg-success text-success-foreground';
-    if (percentage >= 60) return 'bg-warning text-warning-foreground';
-    return 'bg-destructive text-destructive-foreground';
+  // 🟢🟡🔴 для остальных метрик (0–10)
+  const getMetricBadge = (value: number) => {
+    if (value < 4) return 'bg-red-100 text-red-600';
+    if (value >= 4 && value <= 7) return 'bg-yellow-100 text-yellow-600';
+    return 'bg-green-100 text-green-600';
   };
 
   return (
@@ -53,7 +55,10 @@ export const CallHistoryTable = ({ data }: CallHistoryTableProps) => {
             </thead>
             <tbody>
               {sortedData.map((call, index) => (
-                <tr key={index} className="border-b border-border hover:bg-accent/50 transition-colors">
+                <tr
+                  key={index}
+                  className="border-b border-border hover:bg-accent/50 transition-colors"
+                >
                   <td className="p-3 text-sm text-card-foreground">
                     {parseDateTimeFromDotted(call.Date).toLocaleDateString()}
                   </td>
@@ -61,28 +66,32 @@ export const CallHistoryTable = ({ data }: CallHistoryTableProps) => {
                   <td className="p-3">
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-card-foreground">{call['Man name']}</span>
+                      <span className="text-sm text-card-foreground">
+                        {call['Man name']}
+                      </span>
                     </div>
                   </td>
                   <td className="p-3">
                     <div className="flex items-center space-x-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-card-foreground">{call['Client Phone']}</span>
+                      <span className="text-sm text-card-foreground">
+                        {call['Client Phone']}
+                      </span>
                     </div>
                   </td>
                   <td className="p-3 text-sm text-card-foreground">{call.Duration}</td>
                   <td className="p-3">
-                    <Badge className={getPercentageBadge(call['Quality of Call'])}>
+                    <Badge className={getMetricBadge(call['Quality of Call'])}>
                       {call['Quality of Call']}
                     </Badge>
                   </td>
                   <td className="p-3">
-                    <Badge className={getPercentageBadge(call['Script Match'])}>
+                    <Badge className={getMetricBadge(call['Script Match'])}>
                       {call['Script Match']}
                     </Badge>
                   </td>
                   <td className="p-3">
-                    <Badge className={getPercentageBadge(call['Errors Free'])}>
+                    <Badge className={getMetricBadge(call['Errors Free'])}>
                       {call['Errors Free']}
                     </Badge>
                   </td>

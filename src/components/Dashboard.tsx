@@ -8,6 +8,9 @@ import { ChartsSection } from './ChartsSection';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+import { parseRows } from '@/utils/parse';
+import { computeMetrics } from '@/utils/metrics';
+
 export interface CallData {
   Date: string;
   Time: string;
@@ -15,6 +18,7 @@ export interface CallData {
   'Man name': string;
   LINK: string;
   'Client Phone': string;
+  ClientId: string;
   Duration: string;
   'Quality of Call': number;
   'Script Match': number;
@@ -29,9 +33,10 @@ export interface CallData {
 export const Dashboard = () => {
   const [data, setData] = useState<CallData[]>([]);
   const [loading, setLoading] = useState(true);
-  // Use non-empty sentinel values to satisfy Radix Select requirements
+
   const ALL_MANAGERS = '__ALL_MANAGERS__';
   const ALL_CLIENTS = '__ALL_CLIENTS__';
+
   const [selectedManager, setSelectedManager] = useState<string>(ALL_MANAGERS);
   const [selectedClient, setSelectedClient] = useState<string>(ALL_CLIENTS);
   const [filteredData, setFilteredData] = useState<CallData[]>([]);
@@ -43,30 +48,14 @@ export const Dashboard = () => {
         'https://docs.google.com/spreadsheets/d/1WBoa0GfdwriFrqKCTzNMnTA2DaKEbKvh5BsZ6kyiTLo/gviz/tq?tqx=out:json'
       );
       const text = await response.text();
-      
-      // Parse Google Sheets JSON response (remove gviz wrapper)
+
+      // вырезаем JSON из ответа Google Sheets
       const jsonString = text.replace(/.*?({.*}).*/s, '$1');
       const parsed = JSON.parse(jsonString);
-      
+
       const rows = parsed.table.rows;
-      const parsedData: CallData[] = rows.map((row: any) => ({
-        Date: row.c[0]?.v || '',
-        Time: row.c[1]?.v || '',
-        'ID man': row.c[2]?.v || '',
-        'Man name': (row.c[3]?.v || '').toString().trim(),
-        LINK: row.c[4]?.v || '',
-        'Client Phone': (row.c[5]?.v || '').toString().trim(),
-        Duration: row.c[6]?.v || '',
-        'Quality of Call': parseFloat(row.c[7]?.v) || 0,
-        'Script Match': parseFloat(row.c[8]?.v) || 0,
-        'Errors Free': parseFloat(row.c[9]?.v) || 0,
-        'Overall Rating': parseFloat(row.c[10]?.v) || 0,
-        KPI: parseFloat(row.c[11]?.v) || 0,
-        Recommendations: row.c[12]?.v || '',
-        Brief: row.c[13]?.v || '',
-        'Next Best Action': row.c[14]?.v || '',
-      }));
-      
+      const parsedData = parseRows(rows);
+
       setData(parsedData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -81,26 +70,32 @@ export const Dashboard = () => {
 
   useEffect(() => {
     let filtered = data;
-    
-    if (selectedManager && selectedManager !== ALL_MANAGERS) {
-      const normalizedManager = selectedManager.trim();
-      filtered = filtered.filter(item => item['Man name'].trim() === normalizedManager);
+
+    if (selectedManager !== ALL_MANAGERS) {
+      filtered = filtered.filter(
+        (item) => item['Man name'].trim() === selectedManager.trim()
+      );
     }
-    
-    if (selectedClient && selectedClient !== ALL_CLIENTS) {
-      const normalizedClient = selectedClient.trim();
-      filtered = filtered.filter(item => item['Client Phone'].trim() === normalizedClient);
+
+    if (selectedClient !== ALL_CLIENTS) {
+      filtered = filtered.filter(
+        (item) => item['Client Phone'].trim() === selectedClient.trim()
+      );
     }
-    
+
     setFilteredData(filtered);
   }, [data, selectedManager, selectedClient]);
 
-  const managers = [...new Set(
-    data.map(item => item['Man name']?.toString().trim()).filter(Boolean)
-  )];
-  const clients = [...new Set(
-    data.map(item => item['Client Phone']?.toString().trim()).filter(Boolean)
-  )];
+  const managers = [...new Set(data.map((item) => item['Man name']).filter(Boolean))];
+  const clients = [...new Set(data.map((item) => item['Client Phone']).filter(Boolean))];
+
+  const metrics = computeMetrics(
+    filteredData,
+    selectedManager,
+    selectedClient,
+    ALL_MANAGERS,
+    ALL_CLIENTS
+  );
 
   if (loading) {
     return (
@@ -122,9 +117,9 @@ export const Dashboard = () => {
             <h1 className="text-3xl font-bold text-foreground">Call Quality Dashboard</h1>
             <p className="text-muted-foreground">Real-time analytics from Google Sheets</p>
           </div>
-          <Button 
-            onClick={fetchData} 
-            variant="outline" 
+          <Button
+            onClick={fetchData}
+            variant="outline"
             size="sm"
             disabled={loading}
             className="bg-card border-border hover:bg-accent"
@@ -142,9 +137,7 @@ export const Dashboard = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">
-                  Manager
-                </label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">Manager</label>
                 <Select value={selectedManager} onValueChange={setSelectedManager}>
                   <SelectTrigger className="bg-input border-border">
                     <SelectValue placeholder="All Managers" />
@@ -159,11 +152,9 @@ export const Dashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">
-                  Client
-                </label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">Client</label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
                   <SelectTrigger className="bg-input border-border">
                     <SelectValue placeholder="All Clients" />
@@ -183,14 +174,13 @@ export const Dashboard = () => {
         </Card>
 
         {/* Metrics */}
-        <MetricsCards data={filteredData} />
+        <MetricsCards metrics={metrics} callsCount={filteredData.length} />
 
         {/* Charts */}
         <ChartsSection data={filteredData} />
 
-        {/* Detailed Insights */}
-        {selectedManager && selectedClient && (
-          <DetailedInsights data={filteredData} />
+        {selectedManager !== ALL_MANAGERS && selectedClient !== ALL_CLIENTS && (
+            <DetailedInsights data={filteredData} />
         )}
 
         {/* Recent Calls Table */}
@@ -199,3 +189,4 @@ export const Dashboard = () => {
     </div>
   );
 };
+
