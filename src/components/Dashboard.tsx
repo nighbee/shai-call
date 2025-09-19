@@ -487,7 +487,7 @@ export const Dashboard = () => {
         {/* Charts */}
         <ChartsSection data={filteredData} />
 
-        {selectedManager !== ALL_MANAGERS && selectedClient !== ALL_CLIENTS && (
+        {selectedClient !== ALL_CLIENTS && (
             <DetailedInsights data={filteredData} />
         )}
 

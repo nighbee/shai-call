@@ -53,7 +53,7 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
                 briefOpen ? 'max-h-[500px]' : 'max-h-0'
               } bg-white p-4 rounded-lg border border-border`}
             >
-              <div className="text-sm text-card-foreground leading-relaxed">
+              <div className="text-sm text-card-foreground font-medium leading-relaxed">
                 {latestCall.Brief ? (
                   latestCall.Brief.split('\n\n').map((paragraph, index) => (
                     <p key={index} className="mb-3 last:mb-0">
@@ -81,7 +81,7 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
                 recOpen ? 'max-h-[500px]' : 'max-h-0'
               } bg-white p-4 rounded-lg border border-border`}
             >
-              <div className="text-sm text-card-foreground leading-relaxed">
+              <div className="text-sm text-card-foreground font-medium leading-relaxed">
                 {latestCall.Recommendations ? (
                   latestCall.Recommendations.split('\n\n').map((paragraph, index) => (
                     <p key={index} className="mb-3 last:mb-0">
