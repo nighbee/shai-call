@@ -7,7 +7,7 @@ const WorkflowEmbed1 = () => {
         <Card className="bg-card shadow-large animate-slide-up overflow-hidden">
           <div className="p-1">
             <iframe
-              src="http://hackathon.shai.pro/workflow/vRMNjSXsiBMxoAVC"
+              src="https://hackathon.shai.pro/workflow/vRMNjSXsiBMxoAVC"
               width="100%"
               height="800"
               className="rounded-lg border-0"
