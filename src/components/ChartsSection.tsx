@@ -195,6 +195,7 @@
                   height={80}
                 />
                 <YAxis 
+                  domain= {[0, 10]}
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
