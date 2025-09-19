@@ -19,7 +19,7 @@ const Index = () => {
       <div className="container mx-auto p-6">
         <div className="bg-card border border-border rounded-xl p-6 shadow-md">
           <p className="text-muted-foreground mb-4 text-sm">
-            Today calls analysis from Shai.pro: 
+            Have new calls? Make analysis of your new today's calls with Shai.pro: 
           </p>
 
           <Button
