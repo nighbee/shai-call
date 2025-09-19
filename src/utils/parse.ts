@@ -38,6 +38,8 @@ export function parseIndividualRows(rows: any[]): CallData[] {
       call['Man name'] &&
       call['Client Phone'] &&
       call.Date &&
+      call.Date !== 'Invalid Date' &&
+      call.Date !== '' &&
       !call.Date.toString().includes('1899')
   );
 
@@ -84,6 +86,8 @@ export function parseRows(rows: any[]): CallData[] {
       call['Man name'] &&
       call['Client Phone'] &&
       call.Date &&
+      call.Date !== 'Invalid Date' &&
+      call.Date !== '' &&
       !call.Date.toString().includes('1899')
   );
 
@@ -151,10 +155,28 @@ function parseDate(value: any): string {
   if (typeof value === 'string' && value.startsWith('Date(')) {
     try {
       const parts = value.replace('Date(', '').replace(')', '').split(',').map((p) => parseInt(p, 10));
-      const [year, month, day, hour, minute, second] = parts;
+      const [year, month, day, hour = 0, minute = 0, second = 0] = parts;
+      
+      // Google Sheets months are 1-based, JavaScript months are 0-based
+      // So we need to subtract 1 from the month
       const jsDate = new Date(year, month, day, hour, minute, second);
+      
+      // Check if date is valid
+      if (isNaN(jsDate.getTime())) {
+        console.log('parseDate Date() invalid date:', jsDate);
+        return '';
+      }
+      
       const result = jsDate.toLocaleDateString('ru-RU');
       console.log('parseDate Date() result:', result);
+      // Ensure consistent DD.MM.YYYY format
+      const dateParts = result.split('.');
+      if (dateParts.length === 3) {
+        const day = dateParts[0].padStart(2, '0');
+        const month = dateParts[1].padStart(2, '0');
+        const year = dateParts[2];
+        return `${day}.${month}.${year}`;
+      }
       return result;
     } catch (e) {
       console.log('parseDate Date() error:', e);
@@ -183,7 +205,17 @@ function parseDate(value: any): string {
         if (!isNaN(date.getTime())) {
           const result = date.toLocaleDateString('ru-RU');
           console.log('parseDate DD.MM.YYYY parsed result:', result);
+          // Ensure consistent DD.MM.YYYY format
+          const dateParts = result.split('.');
+          if (dateParts.length === 3) {
+            const day = dateParts[0].padStart(2, '0');
+            const month = dateParts[1].padStart(2, '0');
+            const year = dateParts[2];
+            return `${day}.${month}.${year}`;
+          }
           return result;
+        } else {
+          console.log('parseDate DD.MM.YYYY invalid date:', date);
         }
       } catch (e) {
         console.log('parseDate DD.MM.YYYY parse error:', e);
@@ -196,7 +228,17 @@ function parseDate(value: any): string {
       if (!isNaN(date.getTime())) {
         const result = date.toLocaleDateString('ru-RU');
         console.log('parseDate parsed date result:', result);
+        // Ensure consistent DD.MM.YYYY format
+        const dateParts = result.split('.');
+        if (dateParts.length === 3) {
+          const day = dateParts[0].padStart(2, '0');
+          const month = dateParts[1].padStart(2, '0');
+          const year = dateParts[2];
+          return `${day}.${month}.${year}`;
+        }
         return result;
+      } else {
+        console.log('parseDate string parse invalid date:', date);
       }
     } catch (e) {
       console.log('parseDate string parse error:', e);
@@ -212,7 +254,17 @@ function parseDate(value: any): string {
       if (!isNaN(date.getTime())) {
         const result = date.toLocaleDateString('ru-RU');
         console.log('parseDate number result:', result);
+        // Ensure consistent DD.MM.YYYY format
+        const dateParts = result.split('.');
+        if (dateParts.length === 3) {
+          const day = dateParts[0].padStart(2, '0');
+          const month = dateParts[1].padStart(2, '0');
+          const year = dateParts[2];
+          return `${day}.${month}.${year}`;
+        }
         return result;
+      } else {
+        console.log('parseDate number invalid date:', date);
       }
     } catch (e) {
       console.log('parseDate number error:', e);
@@ -232,8 +284,17 @@ function parseTime(value: any): string {
   if (typeof value === 'string' && value.startsWith('Date(')) {
     try {
       const parts = value.replace('Date(', '').replace(')', '').split(',').map((p) => parseInt(p, 10));
-      const [year, month, day, hour, minute, second] = parts;
-      const jsDate = new Date(year, month, day, hour, minute, second);
+      const [year, month, day, hour = 0, minute = 0, second = 0] = parts;
+      
+      // Google Sheets months are 1-based, JavaScript months are 0-based
+      const jsDate = new Date(year, month - 1, day, hour, minute, second);
+      
+      // Check if date is valid
+      if (isNaN(jsDate.getTime())) {
+        console.log('parseTime Date() invalid date:', jsDate);
+        return '';
+      }
+      
       const result = jsDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       console.log('parseTime Date() result:', result);
       return result;

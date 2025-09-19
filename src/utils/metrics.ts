@@ -60,6 +60,6 @@ export function computeMetrics(
     avgScript: +(sum.script / count).toFixed(2),
     avgErrors: +(sum.errors / count).toFixed(2),
     avgRating: +(sum.rating / count).toFixed(2),
-    avgKPI: +(sum.kpi / count).toFixed(2),
+    avgKPI: +(sum.kpi).toFixed(2),
   };
 }

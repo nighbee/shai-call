@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MetricsCards } from './MetricsCards';
 import { CallHistoryTable } from './CallHistoryTable';
 import { DetailedInsights } from './DetailedInsights';
 import { ChartsSection } from './ChartsSection';
-import { Loader2, RefreshCw, X } from 'lucide-react';
+import { Loader2, RefreshCw, X, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 import { parseRows, parseIndividualRows } from '@/utils/parse';
 import { computeMetrics } from '@/utils/metrics';
@@ -40,8 +43,54 @@ export const Dashboard = () => {
 
   const [selectedManager, setSelectedManager] = useState<string>(ALL_MANAGERS);
   const [selectedClient, setSelectedClient] = useState<string>(ALL_CLIENTS);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [calendarKey, setCalendarKey] = useState(0);
   const [filteredData, setFilteredData] = useState<CallData[]>([]);
   const [filteredIndividualData, setFilteredIndividualData] = useState<CallData[]>([]);
+
+  // Helper function to parse DD.MM.YYYY format to Date
+  const parseDateString = (dateStr: string): Date | null => {
+    if (!dateStr || dateStr === 'Invalid Date' || dateStr.trim() === '') return null;
+    
+    console.log('parseDateString input:', dateStr);
+    
+    // Try DD.MM.YYYY format first
+    let match = dateStr.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      // Normalize to start of day
+      date.setHours(0, 0, 0, 0);
+      console.log('parseDateString DD.MM.YYYY result:', date);
+      if (!isNaN(date.getTime())) return date;
+    }
+    
+    // Try D.M.YYYY format (single digits)
+    match = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      // Normalize to start of day
+      date.setHours(0, 0, 0, 0);
+      console.log('parseDateString D.M.YYYY result:', date);
+      if (!isNaN(date.getTime())) return date;
+    }
+    
+    // Try to parse as a general date string
+    try {
+      const date = new Date(dateStr);
+      // Normalize to start of day
+      date.setHours(0, 0, 0, 0);
+      console.log('parseDateString general parse result:', date);
+      if (!isNaN(date.getTime())) return date;
+    } catch (e) {
+      console.log('parseDateString general parse error:', e);
+    }
+    
+    console.log('parseDateString failed to parse:', dateStr);
+    return null;
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -61,6 +110,15 @@ export const Dashboard = () => {
 
       setData(parsedData);
       setIndividualData(individualParsedData);
+      
+      // Debug: log sample dates to understand format
+      console.log('Sample dates from data:');
+      if (parsedData.length > 0) {
+        console.log('First 3 dates from grouped data:', parsedData.slice(0, 3).map(item => item.Date));
+      }
+      if (individualParsedData.length > 0) {
+        console.log('First 3 dates from individual data:', individualParsedData.slice(0, 3).map(item => item.Date));
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -88,6 +146,47 @@ export const Dashboard = () => {
       );
     }
 
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      console.log('Filtering by date range:', { dateFrom, dateTo });
+      console.log('Before date filter, filtered count:', filtered.length);
+      
+      filtered = filtered.filter((item) => {
+        const itemDate = parseDateString(item.Date);
+        console.log('Item date string:', item.Date, 'parsed date:', itemDate);
+        
+        if (!itemDate) {
+          console.log('Item date could not be parsed, excluding');
+          return false;
+        }
+
+        if (dateFrom) {
+          // Set time to start of day for dateFrom comparison
+          const startOfDay = new Date(dateFrom);
+          startOfDay.setHours(0, 0, 0, 0);
+          if (itemDate < startOfDay) {
+            console.log('Item date is before dateFrom, excluding');
+            return false;
+          }
+        }
+        
+        if (dateTo) {
+          // Set time to end of day for dateTo comparison
+          const endOfDay = new Date(dateTo);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (itemDate > endOfDay) {
+            console.log('Item date is after dateTo, excluding');
+            return false;
+          }
+        }
+
+        console.log('Item passed date filter');
+        return true;
+      });
+      
+      console.log('After date filter, filtered count:', filtered.length);
+    }
+
     setFilteredData(filtered);
 
     // Filter individual data for call history table
@@ -105,8 +204,49 @@ export const Dashboard = () => {
       );
     }
 
+    // Filter individual data by date range
+    if (dateFrom || dateTo) {
+      console.log('Filtering individual data by date range:', { dateFrom, dateTo });
+      console.log('Before date filter, individual count:', filteredIndividual.length);
+      
+      filteredIndividual = filteredIndividual.filter((item) => {
+        const itemDate = parseDateString(item.Date);
+        console.log('Individual item date string:', item.Date, 'parsed date:', itemDate);
+        
+        if (!itemDate) {
+          console.log('Individual item date could not be parsed, excluding');
+          return false;
+        }
+
+        if (dateFrom) {
+          // Set time to start of day for dateFrom comparison
+          const startOfDay = new Date(dateFrom);
+          startOfDay.setHours(0, 0, 0, 0);
+          if (itemDate < startOfDay) {
+            console.log('Individual item date is before dateFrom, excluding');
+            return false;
+          }
+        }
+        
+        if (dateTo) {
+          // Set time to end of day for dateTo comparison
+          const endOfDay = new Date(dateTo);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (itemDate > endOfDay) {
+            console.log('Individual item date is after dateTo, excluding');
+            return false;
+          }
+        }
+
+        console.log('Individual item passed date filter');
+        return true;
+      });
+      
+      console.log('After date filter, individual count:', filteredIndividual.length);
+    }
+
     setFilteredIndividualData(filteredIndividual);
-  }, [data, individualData, selectedManager, selectedClient]);
+  }, [data, individualData, selectedManager, selectedClient, dateFrom, dateTo]);
 
   // Get all managers and clients from individual data for accurate filtering
   const allManagers = [...new Set(individualData.map((item) => item['Man name']).filter(Boolean))];
@@ -166,10 +306,13 @@ export const Dashboard = () => {
     }
   };
 
-  // Reset both filters
+  // Reset all filters
   const resetFilters = () => {
     setSelectedManager(ALL_MANAGERS);
     setSelectedClient(ALL_CLIENTS);
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setCalendarKey(prev => prev + 1); // Force calendar re-render
   };
 
   const metrics = computeMetrics(
@@ -217,7 +360,7 @@ export const Dashboard = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-card-foreground">Filters</CardTitle>
-              {(selectedManager !== ALL_MANAGERS || selectedClient !== ALL_CLIENTS) && (
+              {(selectedManager !== ALL_MANAGERS || selectedClient !== ALL_CLIENTS || dateFrom || dateTo) && (
                 <Button
                   onClick={resetFilters}
                   variant="outline"
@@ -231,7 +374,7 @@ export const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-card-foreground mb-2">
                   Manager {selectedClient !== ALL_CLIENTS && `(for ${selectedClient})`}
@@ -278,6 +421,61 @@ export const Dashboard = () => {
                     No clients found for this manager
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Date From
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-input border-border hover:bg-accent"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, 'dd.MM.yyyy') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
+                    <Calendar
+                      key={`dateFrom-${calendarKey}`}
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      defaultMonth={dateFrom}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Date To
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-input border-border hover:bg-accent"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, 'dd.MM.yyyy') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
+                    <Calendar
+                      key={`dateTo-${calendarKey}`}
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      defaultMonth={dateTo}
+                      disabled={(date) => dateFrom ? date < dateFrom : false}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </CardContent>
