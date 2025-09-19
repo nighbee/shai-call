@@ -1,80 +1,52 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Target, CheckCircle, Star, BarChart3 } from 'lucide-react';
-import { CallData } from './Dashboard';
 
 interface MetricsCardsProps {
-  data: CallData[];
+  metrics: {
+    avgQuality: number;
+    avgScript: number;
+    avgErrors: number;
+    avgRating: number;
+    avgKPI: number;
+  };
+  callsCount: number;
 }
 
-export const MetricsCards = ({ data }: MetricsCardsProps) => {
-  const calculateAverage = (field: keyof CallData) => {
-    const values = data
-      .map((item) => Number(item[field]))
-      .filter((v) => !Number.isNaN(v));
-    if (values.length === 0) return 0;
-    const sum = values.reduce((acc, v) => acc + v, 0);
-    return sum / values.length;
+export const MetricsCards = ({ metrics, callsCount }: MetricsCardsProps) => {
+  const formatValue = (value: number) => value.toFixed(1);
+
+  const getColorClass = (value: number) => {
+    if (value < 4) return 'text-red-500';
+    if (value >= 4 && value <= 7) return 'text-yellow-500';
+    return 'text-green-500';
   };
 
-  const formatPercentage = (value: number) => `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)}`;
-  const formatScore = (value: number) => value.toFixed(2);
-
-  const metrics = [
-    {
-      title: 'Quality of Call',
-      value: formatPercentage(calculateAverage('Quality of Call')),
-      icon: TrendingUp,
-      gradient: 'bg-gradient-primary',
-      textColor: 'text-success-foreground'
-    },
-    {
-      title: 'Script Match',
-      value: formatPercentage(calculateAverage('Script Match')),
-      icon: Target,
-      gradient: 'bg-gradient-success',
-      textColor: 'text-success-foreground'
-    },
-    {
-      title: 'Errors Free',
-      value: formatPercentage(calculateAverage('Errors Free')),
-      icon: CheckCircle,
-      gradient: 'bg-gradient-warning',
-      textColor: 'text-warning-foreground'
-    },
-    {
-      title: 'Overall Rating',
-      value: formatScore(calculateAverage('Overall Rating')),
-      icon: Star,
-      gradient: 'bg-gradient-danger',
-      textColor: 'text-success-foreground'
-    },
-    {
-      title: 'KPI Score',
-      value: formatScore(calculateAverage('KPI')),
-      icon: BarChart3,
-      gradient: 'bg-gradient-primary',
-      textColor: 'text-success-foreground'
-    }
+  const cards = [
+    { title: 'Quality of Call', value: metrics.avgQuality, icon: TrendingUp },
+    { title: 'Script Match', value: metrics.avgScript, icon: Target },
+    { title: 'Errors Free', value: metrics.avgErrors, icon: CheckCircle },
+    { title: 'Overall Rating', value: metrics.avgRating, icon: Star },
+    { title: 'KPI Score', value: metrics.avgKPI, icon: BarChart3 },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-      {metrics.map((metric) => {
-        const IconComponent = metric.icon;
+      {cards.map((card) => {
+        const IconComponent = card.icon;
         return (
-          <Card key={metric.title} className="bg-card shadow-card border-border overflow-hidden">
-            <CardHeader className={`${metric.gradient} ${metric.textColor} pb-2`}>
-              <CardTitle className="flex items-center justify-between text-sm font-medium">
-                {metric.title}
+          <Card key={card.title} className="bg-card shadow-card border-border overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center justify-between text-sm font-medium text-card-foreground">
+                {card.title}
                 <IconComponent className="h-5 w-5 opacity-80" />
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-card-foreground">
-                {metric.value}
+              <div className={`text-2xl font-bold ${getColorClass(card.value)}`}>
+                {formatValue(card.value)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Based on {data.length} calls
+                Based on {callsCount} calls
               </p>
             </CardContent>
           </Card>
