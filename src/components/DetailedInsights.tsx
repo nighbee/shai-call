@@ -29,7 +29,7 @@ export const DetailedInsights = ({ data }: DetailedInsightsProps) => {
 
   return (
     <Card className="bg-card shadow-lg border-border">
-      <CardHeader className="bg-gradient-primary">
+      <CardHeader className="bg-black-primary">
         <CardTitle className="flex items-center space-x-2 text-primary-foreground">
           <Lightbulb className="h-5 w-5" />
           <span>Detailed Insights</span>
