@@ -59,7 +59,7 @@ const Index = () => {
       <div className="container mx-auto p-6">
         <div className="bg-card border border-border rounded-xl p-6 shadow-md">
           <p className="text-muted-foreground mb-4 text-sm">
-            Want to see the details of a single call? Click the button below(use this <a href=" https://files.salebot.pro/uploads/file_item/51965265/file/698408/2024_12_03-14_32_15_from_203_to_87056185026.mp3"> example file</a>
+            Want to see the details of a single call? Click the button below(use this <a href=" https://files.salebot.pro/uploads/file_item/51965265/file/698408/2024_12_03-14_32_15_from_203_to_87056185026.mp3"> example file</a>)
           </p>
 
           <Button
