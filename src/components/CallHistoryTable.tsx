@@ -97,7 +97,7 @@ export const CallHistoryTable = ({ data }: CallHistoryTableProps) => {
                   </td>
                   <td className="p-3">
                     <Badge className={getRatingBadge(call['Overall Rating'])}>
-                      {call['Overall Rating']}/10
+                      {call['Overall Rating'].toFixed(1)}/10
                     </Badge>
                   </td>
                 </tr>
