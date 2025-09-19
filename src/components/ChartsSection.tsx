@@ -140,7 +140,7 @@
         </Card> */}
 
         {/* Performance Distribution */}
-        <Card className="bg-card shadow-card border-border">
+        {/* <Card className="bg-card shadow-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-card-foreground">
               <PieChartIcon className="h-5 w-5" />
@@ -172,7 +172,7 @@
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Manager Performance */}
         <Card className="col-span-1 lg:col-span-2 xl:col-span-3 bg-card shadow-card border-border">

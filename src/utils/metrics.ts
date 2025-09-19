@@ -7,6 +7,7 @@ export function computeMetrics(
   ALL_MANAGERS: string,
   ALL_CLIENTS: string
 ) {
+  // Filter invalid numeric data
   const validData = data.filter(
     (d) =>
       !isNaN(d['Quality of Call']) &&
@@ -20,15 +21,28 @@ export function computeMetrics(
     return { avgQuality: 0, avgScript: 0, avgErrors: 0, avgRating: 0, avgKPI: 0 };
   }
 
-  // 🎯 если выбран менеджер и клиент → берём последний звонок
-  if (manager !== ALL_MANAGERS && client !== ALL_CLIENTS) {
-    const sorted = [...validData].sort((a, b) => {
-      const da = new Date(`${a.Date} ${a.Time}`).getTime();
-      const db = new Date(`${b.Date} ${b.Time}`).getTime();
-      return da - db;
-    });
-    const latest = sorted[sorted.length - 1];
+  // Deduplicate by manager+client for metrics
+  const uniqueMap = new Map<string, CallData>();
+  validData.forEach((call) => {
+    const key = `${call['ID man']}_${call.ClientId}`;
+    // Keep only the latest call per pair
+    const existing = uniqueMap.get(key);
+    const callTime = new Date(`${call.Date} ${call.Time}`).getTime();
+    if (!existing) {
+      uniqueMap.set(key, call);
+    } else {
+      const existingTime = new Date(`${existing.Date} ${existing.Time}`).getTime();
+      if (callTime > existingTime) {
+        uniqueMap.set(key, call);
+      }
+    }
+  });
 
+  const dedupData = Array.from(uniqueMap.values());
+
+  // If specific manager + client → take latest
+  if (manager !== ALL_MANAGERS && client !== ALL_CLIENTS) {
+    const latest = dedupData[dedupData.length - 1];
     return {
       avgQuality: latest['Quality of Call'],
       avgScript: latest['Script Match'],
@@ -38,8 +52,8 @@ export function computeMetrics(
     };
   }
 
-  // 📊 иначе → считаем среднее
-  const sum = validData.reduce(
+  // Otherwise → average metrics
+  const sum = dedupData.reduce(
     (acc, call) => {
       acc.quality += call['Quality of Call'];
       acc.script += call['Script Match'];
@@ -51,7 +65,7 @@ export function computeMetrics(
     { quality: 0, script: 0, errors: 0, rating: 0, kpi: 0 }
   );
 
-  const count = validData.length;
+  const count = dedupData.length;
 
   return {
     avgQuality: +(sum.quality / count).toFixed(2),
