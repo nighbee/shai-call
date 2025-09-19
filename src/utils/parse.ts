@@ -141,34 +141,148 @@ export function parseRows(rows: any[]): CallData[] {
   return combinedData;
 }
 
-// Date/Time parsing helpers (unchanged)
+// Date/Time parsing helpers
 function parseDate(value: any): string {
   if (!value) return '';
+  
+  console.log('parseDate input:', value, typeof value);
+  
+  // Handle Google Sheets Date() format
   if (typeof value === 'string' && value.startsWith('Date(')) {
     try {
       const parts = value.replace('Date(', '').replace(')', '').split(',').map((p) => parseInt(p, 10));
       const [year, month, day, hour, minute, second] = parts;
       const jsDate = new Date(year, month, day, hour, minute, second);
-      return jsDate.toLocaleDateString('ru-RU');
-    } catch {
+      const result = jsDate.toLocaleDateString('ru-RU');
+      console.log('parseDate Date() result:', result);
+      return result;
+    } catch (e) {
+      console.log('parseDate Date() error:', e);
       return '';
     }
   }
-  if (typeof value === 'string') return value.trim();
+  
+  // Handle string dates like "12.02.2025"
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    console.log('parseDate string input:', trimmed);
+    
+    // Check if it's already in DD.MM.YYYY format - just return it as-is
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(trimmed)) {
+      console.log('parseDate DD.MM.YYYY format (returning as-is):', trimmed);
+      return trimmed;
+    }
+    
+    // Try to parse DD.MM.YYYY format specifically
+    const ddmmyyyyMatch = trimmed.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (ddmmyyyyMatch) {
+      const [, day, month, year] = ddmmyyyyMatch;
+      try {
+        // Create date with MM.DD.YYYY format (month is 0-indexed in JS)
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          const result = date.toLocaleDateString('ru-RU');
+          console.log('parseDate DD.MM.YYYY parsed result:', result);
+          return result;
+        }
+      } catch (e) {
+        console.log('parseDate DD.MM.YYYY parse error:', e);
+      }
+    }
+    
+    // Try to parse as a date string
+    try {
+      const date = new Date(trimmed);
+      if (!isNaN(date.getTime())) {
+        const result = date.toLocaleDateString('ru-RU');
+        console.log('parseDate parsed date result:', result);
+        return result;
+      }
+    } catch (e) {
+      console.log('parseDate string parse error:', e);
+    }
+    
+    return trimmed;
+  }
+  
+  // Handle number timestamps
+  if (typeof value === 'number') {
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        const result = date.toLocaleDateString('ru-RU');
+        console.log('parseDate number result:', result);
+        return result;
+      }
+    } catch (e) {
+      console.log('parseDate number error:', e);
+    }
+  }
+  
+  console.log('parseDate fallback, returning empty string');
   return '';
 }
 
 function parseTime(value: any): string {
   if (!value) return '';
+  
+  console.log('parseTime input:', value, typeof value);
+  
+  // Handle Google Sheets Date() format
   if (typeof value === 'string' && value.startsWith('Date(')) {
     try {
       const parts = value.replace('Date(', '').replace(')', '').split(',').map((p) => parseInt(p, 10));
       const [year, month, day, hour, minute, second] = parts;
       const jsDate = new Date(year, month, day, hour, minute, second);
-      return jsDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    } catch {
+      const result = jsDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      console.log('parseTime Date() result:', result);
+      return result;
+    } catch (e) {
+      console.log('parseTime Date() error:', e);
       return '';
     }
   }
+  
+  // Handle string times like "5:23", "07:23"
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    console.log('parseTime string input:', trimmed);
+    
+    // Check if it's already in HH:mm format
+    if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
+      console.log('parseTime HH:mm format:', trimmed);
+      return trimmed;
+    }
+    
+    // Try to parse as a time string
+    try {
+      const date = new Date(`2000-01-01T${trimmed}`);
+      if (!isNaN(date.getTime())) {
+        const result = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        console.log('parseTime parsed time result:', result);
+        return result;
+      }
+    } catch (e) {
+      console.log('parseTime string parse error:', e);
+    }
+    
+    return trimmed;
+  }
+  
+  // Handle number timestamps
+  if (typeof value === 'number') {
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        const result = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        console.log('parseTime number result:', result);
+        return result;
+      }
+    } catch (e) {
+      console.log('parseTime number error:', e);
+    }
+  }
+  
+  console.log('parseTime fallback, returning string value');
   return value.toString().trim();
 }
